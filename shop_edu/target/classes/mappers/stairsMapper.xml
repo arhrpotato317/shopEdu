@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="stairs">
+	<select id="selectStairs" resultType="hashmap">
+		SELECT CDLVL, CDNAME, CDNO, UPCD, DECODE(USEYN, 'Y', 'checked') USEYN
+		FROM EXAM_MANAGER.CODEMNG
+		START WITH CDNO = 'C0000'
+		CONNECT BY PRIOR CDNO = UPCD
+	</select>
+	<select id="selectStairsOne" parameterType="String" resultType="hashmap">
+		SELECT CDLVL, CDNAME, CDNO, UPCD, DECODE(USEYN, 'Y', 'checked') USEYN
+		FROM EXAM_MANAGER.CODEMNG
+		WHERE CDNO = #{codeNum}
+	</select>
+	
+	<!-- 계층쿼리 추가 -->
+	<insert id="insertStairs" parameterType="hashmap">
+		INSERT INTO EXAM_MANAGER.CODEMNG(CDNO, CDLVL, UPCD, CDNAME, INSUSER, INSDATE, USEYN)
+			VALUES((SELECT 'C' || LPAD(NVL(SUBSTR(MAX(CDNO), 2)+1, 1), 4, '0') FROM EXAM_MANAGER.CODEMNG)
+				, #{cdLvl}, #{upCd}, #{cdName}, '관리자', SYSDATE, #{useYn})
+	</insert>
+	<!-- 계층쿼리 수정 -->
+	<update id="updateStairs" parameterType="hashmap">
+		UPDATE EXAM_MANAGER.CODEMNG
+		SET CDLVL = #{cdLvl}, UPCD = #{upCd}, CDNAME = #{cdName}, USEYN = #{useYn}
+		WHERE CDNO = #{cdNo}
+	</update>
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

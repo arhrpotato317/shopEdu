@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="login">
+	<!-- 로그인 -->
+	<select id="selectLogin" parameterType="hashmap" resultType="hashmap">
+		SELECT ID, PASS, NAME, INSDATE, USEYN
+		FROM EXAM_MANAGER.USERINFO
+		WHERE ID = #{userId}
+		AND PASS = #{userPass}
+	</select>
+	
+	<!-- 회원가입 - 아이디 중복체크 -->
+	<select id="selectIdCheck" parameterType="String" resultType="int">
+		SELECT COUNT(*)
+		FROM EXAM_MANAGER.USERINFO
+		WHERE ID = #{userId}
+	</select>
+	
+	<!-- 회원가입 -->
+	<insert id="insertJoin" parameterType="hashmap">
+		INSERT INTO EXAM_MANAGER.USERINFO(ID, PASS, NAME, INSDATE)
+		VALUES(#{id}, #{pass}, #{name}, SYSDATE)
+	</insert>
+	
+	<!-- 회원가입 상세 -->
+	<insert id="insertDetail" parameterType="hashmap">
+		INSERT INTO EXAM_MANAGER.USERINFODETAIL(ID, USERINFODETAILCD, RELCD
+			, ADDRCD, ADDRNAME, MOBILETELNO, HOMETELNO, USEYN, DELIVNAME)
+		VALUES(#{id}
+			, (SELECT 'U' || LPAD(NVL(SUBSTR(MAX(USERINFODETAILCD), 2)+1, 1), 8, '0') FROM EXAM_MANAGER.USERINFODETAIL)
+			, #{relCd}, #{addrCd}, #{addrName}, #{mobileTelNo}, #{homeTelNo}, #{useYn}, #{delivName}
+		)
+	</insert>
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="initem">
+
+	<!-- 카테고리 option 목록 -->
+	<select id="categoryOneList" parameterType="String" resultType="hashmap">
+		SELECT CDNAME, CDNO
+		FROM EXAM_MANAGER.CODEMNG
+		WHERE UPCD = #{upCd}
+	</select>
+	
+	<!-- 카테고리 조회 -->
+	<select id="categoryList" parameterType="hashmap" resultType="hashmap">
+		SELECT ITEMCD, ITEMNAME, MADENMCD, ITEMUNITCD, STOCKAMT, DECODE(STOCKYN, 'Y', 'checked') STOCKYN, DECODE(USEYN, 'Y', 'checked') USEYN, ITEMCLSCD
+			, (SELECT CDNAME FROM EXAM_MANAGER.CODEMNG CMG WHERE ITEM.MADENMCD = CMG.CDNO) AS MADENMNAME
+			, (SELECT CDNAME FROM EXAM_MANAGER.CODEMNG CMG WHERE ITEM.ITEMUNITCD = CMG.CDNO) AS ITEMUNITNAME
+		FROM EXAM_MANAGER.ITEMLIST ITEM
+		WHERE ITEMCLSCD = #{cateTwo}
+	</select>
+	
+	<!-- 금일 입고리스트 조회 -->
+	<select id="itemSelectList" parameterType="String" resultType="hashmap">
+		SELECT ITEMCD, INSITEMLISTCD
+			,(SELECT ITEMNAME FROM EXAM_MANAGER.ITEMLIST ITEM WHERE INITEM.ITEMCD = ITEM.ITEMCD) AS ITEMNAME
+			,(SELECT MADENMCD FROM EXAM_MANAGER.ITEMLIST ITEM WHERE INITEM.ITEMCD = ITEM.ITEMCD) AS MADENMCD
+			,(SELECT CMG.CDNAME
+				FROM EXAM_MANAGER.ITEMLIST ITEM, EXAM_MANAGER.CODEMNG CMG
+				WHERE INITEM.ITEMCD = ITEM.ITEMCD
+				AND ITEM.MADENMCD = CMG.CDNO) AS MADENMNAME
+			,(SELECT ITEMUNITCD FROM EXAM_MANAGER.ITEMLIST ITEM WHERE INITEM.ITEMCD = ITEM.ITEMCD) AS ITEMUNITCD
+			,(SELECT CMG.CDNAME
+				FROM EXAM_MANAGER.ITEMLIST ITEM, EXAM_MANAGER.CODEMNG CMG
+				WHERE INITEM.ITEMCD = ITEM.ITEMCD
+				AND ITEM.ITEMUNITCD = CMG.CDNO) AS ITEMUNITNAME
+			, INSAMT
+		FROM EXAM_MANAGER.INITEMLIST INITEM
+		WHERE INSDATE = TO_CHAR(SYSDATE, 'YY/MM/DD')
+		<if test="value != null">
+			AND INITEM.INSITEMLISTCD = #{value}
+		</if>
+	</select>
+	
+	<!-- 금일 입고리스트 저장 -->
+	<insert id="itemInsert" parameterType="hashmap">
+		<selectKey keyProperty="INSITEMLISTCD" resultType="String" order="BEFORE">
+			SELECT 'II' || NVL(LPAD(SUBSTR(MAX(INSITEMLISTCD), 3)+1, 8, '0'), 1) FROM EXAM_MANAGER.INITEMLIST
+		</selectKey>
+		
+		INSERT INTO EXAM_MANAGER.INITEMLIST(ITEMCD, INSITEMLISTCD, INSAMT, INSDATE, INSUSER)
+		VALUES(#{itemCd}
+			, (SELECT 'II' || NVL(LPAD(SUBSTR(MAX(INSITEMLISTCD), 3)+1, 8, '0'), 1) FROM EXAM_MANAGER.INITEMLIST)
+			, #{insAmt}, SYSDATE, '관리자')
+	</insert>
+	
+	<!-- 입고 시 물품관리 재고수량 변경 -->
+	<update id="stockAmtUp" parameterType="hashmap">
+		UPDATE EXAM_MANAGER.ITEMLIST
+		SET 
+		<if test="upDown != null and upDown =='down'">
+			STOCKAMT = STOCKAMT - #{updateNum}
+		</if>
+		<if test="upDown != null and upDown =='up'">
+			STOCKAMT = STOCKAMT + #{updateNum}
+		</if>
+		
+		WHERE ITEMCD = #{itemCd}
+	</update>
+	
+	<!-- 금일 입고리스트 수량수정 -->
+	<update id="itemUpdate" parameterType="hashmap">
+		UPDATE EXAM_MANAGER.INITEMLIST
+		SET INSAMT = #{insAmt}
+		WHERE INSITEMLISTCD = #{itemListCd}
+	</update>
+	
+	<!-- 물품 테이블 수량 조회 -->
+	<select id="itemStockAmt" parameterType="String" resultType="hashmap">
+		SELECT ITEMCD, STOCKAMT FROM EXAM_MANAGER.ITEMLIST
+		WHERE ITEMCD = #{itemCd}
+	</select>
+	
+	<!-- 금일 입고리스트 수량 조회 -->
+	<select id="initemStockAmt" parameterType="String" resultType="hashmap">
+		SELECT ITEMCD, INSAMT FROM EXAM_MANAGER.INITEMLIST
+		WHERE INSITEMLISTCD = #{itemListCd}
+	</select>
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

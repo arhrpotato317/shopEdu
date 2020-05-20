@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="emp">
+	<select id="selectEmpList" parameterType="hashmap" resultType="hashmap">
+		<![CDATA[
+			SELECT ENAME, COMM, HIREDATE, EMPNO, MGR, JOB, DEPTNO, SAL
+			FROM EXAM_MANAGER.EMP
+			WHERE 1=1
+		]]>
+		<if test="empNo != null and empNo != ''">
+			<![CDATA[
+				AND EMPNO = #{empNo}
+			]]>
+		</if>
+		<if test="depNo != null and depNo != ''">
+			<![CDATA[
+				AND DEPNO = #{depNo}
+			]]>
+		</if>
+	</select>
+	
+	<select id="selectEmpListVO" parameterType="hashmap" resultType="com.edu.shop.emp.EmpVO">
+		<![CDATA[
+			SELECT ENAME, COMM, HIREDATE, EMPNO, MGR, JOB, DEPTNO, SAL
+			FROM EXAM_MANAGER.EMP
+			WHERE 1=1
+		]]>
+		<if test="empNo != null and empNo != ''">
+			<![CDATA[
+				AND EMPNO = #{empNo}
+			]]>
+		</if>
+		<if test="deptNo != null and deptNo != ''">
+			<![CDATA[
+				AND DEPTNO = #{deptNo}
+			]]>
+		</if>
+	</select>
+</mapper>

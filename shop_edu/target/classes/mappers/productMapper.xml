@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="product">
+	<!-- 상품목록에 해당하는 대분류 -->
+	<select id="selectCategoryOne" resultType="hashmap">
+		SELECT CDNAME, CDNO
+		FROM EXAM_MANAGER.CODEMNG
+		WHERE UPCD='C0001'
+	</select>
+	<!-- 대분류에 속하는 하위분류 -->
+	<select id="selectCategoryTwo" parameterType="String" resultType="hashmap">
+		SELECT CDNAME, CDNO
+		FROM EXAM_MANAGER.CODEMNG
+		WHERE UPCD = #{cdNo}
+	</select>
+	
+	<!-- 카테고리 조회 -->
+	<select id="selectProductList" parameterType="String" resultType="hashmap">
+		SELECT ITM.ITEMCD, ITM.ITEMNAME, ITM.MADENMCD, ITM.ITEMUNITCD, ITM.STOCKAMT, ITM.STOCKYN, ITM.USEYN, ITM.ITEMCLSCD 
+			,(SELECT CDM.CDNAME FROM EXAM_MANAGER.CODEMNG CDM WHERE ITM.MADENMCD = CDM.CDNO) AS MADENMNAME
+			,(SELECT CDM.CDNAME FROM EXAM_MANAGER.CODEMNG CDM WHERE ITM.ITEMUNITCD = CDM.CDNO) AS ITEMUNITNAME
+		FROM EXAM_MANAGER.ITEMLIST ITM
+		WHERE ITEMCLSCD = #{cdNo}
+	</select>
+	
+	<!-- 제조사, 단위 리스트 -->
+	<select id="selectsubmitList" parameterType="String" resultType="hashmap">
+		SELECT CDNO, CDNAME
+		FROM EXAM_MANAGER.CODEMNG
+		WHERE UPCD = #{cdNo}
+	</select>
+	
+	<!-- 추가 -->
+	<insert id="insertProduct" parameterType="hashmap">
+		INSERT INTO EXAM_MANAGER.ITEMLIST(ITEMCD, ITEMNAME, MADENMCD, ITEMUNITCD, STOCKAMT, STOCKYN
+			, INSUSER, INSDATE, USEYN)
+		VALUES((SELECT 'I' || LPAD(NVL(SUBSTR(MAX(ITEMCD), 2)+1, 1), 4, '0') FROM EXAM_MANAGER.ITEMLIST)
+			, #{itemName}, #{madeCode}, #{unitCode}, 100, 'Y'
+			, '관리자', SYSDATE, #{useYn})
+	</insert>
+	
+	<!-- 수정 -->
+	<update id="updateProduct" parameterType="hashmap">
+		UPDATE EXAM_MANAGER.ITEMLIST
+		SET ITEMNAME = #{itemName}, MADENMCD = #{madeCode}, ITEMUNITCD = #{unitCode}, USEYN = #{useYn}
+		WHERE ITEMCD = #{itemCode}
+	</update>
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

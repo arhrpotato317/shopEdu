@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="outitem">
+	<!-- 카테고리 리스트 가져오기 -->
+	<select id="categoryList" parameterType="String" resultType="hashmap">
+		SELECT CDNO, CDNAME
+		FROM EXAM_MANAGER.CODEMNG
+		WHERE UPCD = #{upCode}
+	</select>
+	
+	<!-- 카테고리 선택에 해당하는 물품 리스트 -->
+	<select id="categoryItemList" parameterType="String" resultType="hashmap">
+		SELECT ITEMCD, ITEMNAME, MADENMCD, ITEMUNITCD, STOCKAMT, STOCKYN, USEYN
+			, (SELECT CDNAME FROM EXAM_MANAGER.CODEMNG CMG WHERE ITEM.MADENMCD = CMG.CDNO) MADENMNAME
+			, (SELECT CDNAME FROM EXAM_MANAGER.CODEMNG CMG WHERE ITEM.ITEMUNITCD = CMG.CDNO) ITEMUNITNAME
+		FROM EXAM_MANAGER.ITEMLIST ITEM
+		WHERE ITEMCLSCD = #{itemClsCode}
+	</select>
+	
+	<!-- 금일 출고리스트에 추가하기 -->
+	<select id="todayOutItem" parameterType="String" resultType="hashmap">
+		SELECT 
+			OUTITEM.OUTITEMLISTCD,
+			OUTITEM.DELIVNO,
+			OUTITEM.DELIVCORPCD,
+			
+			OUTITEM.ITEMCD,
+			ITEM.ITEMNAME,
+			ITEM.MADENMCD,
+			(SELECT CMG.CDNAME FROM EXAM_MANAGER.CODEMNG CMG WHERE ITEM.MADENMCD = CMG.CDNO) AS MADENMNAME,
+			(SELECT CMG.CDNAME FROM EXAM_MANAGER.CODEMNG CMG WHERE ITEM.ITEMUNITCD = CMG.CDNO) AS ITEMUNITNAME,
+			OUTITEM.DELIVAMT, 
+			USERDETAIL.ID, USERDETAIL.INSUSER, 
+			DECODE(USERDETAIL.RELCD, 'C0021','본인','C0022','부모님','C0023','동생','C0024','지인') AS RELCD,
+			USERDETAIL.ADDRCD, USERDETAIL.ADDRNAME, USERDETAIL.MOBILETELNO, USERDETAIL.HOMETELNO,
+			OUTITEM.CHECKYN, OUTITEM.DELIVYN
+		FROM
+			EXAM_MANAGER.OUTITEMLIST OUTITEM,
+			EXAM_MANAGER.ITEMLIST ITEM,
+			EXAM_MANAGER.USERINFODETAIL USERDETAIL
+		WHERE
+			OUTITEM.USERINFODETAILCD = USERDETAIL.USERINFODETAILCD
+			AND OUTITEM.ITEMCD = ITEM.ITEMCD
+			AND OUTITEM.INSDATE = TO_CHAR(SYSDATE, 'YY/MM/DD')
+		<if test="value != null">
+			AND OUTITEM.OUTITEMLISTCD = #{value}
+		</if>
+	</select>
+	
+	<!-- 출고관리 테이블에 추가하기 -->
+	<insert id="outItemInsert" parameterType="hashmap">
+		<selectKey keyProperty="OUTITEMLISTCD" resultType="String" order="BEFORE">
+			SELECT 'OI' || NVL(LPAD(SUBSTR(MAX(OUTITEMLISTCD), 3)+1, 8, '0'), 1) FROM EXAM_MANAGER.OUTITEMLIST
+		</selectKey>
+		
+		INSERT INTO EXAM_MANAGER.OUTITEMLIST (ITEMCD, USERINFODETAILCD, OUTITEMLISTCD, DELIVAMT, CHECKUSER, CHECKDATE, CHECKYN, DELIVYN, DELIVCORPCD, DELIVNO, INSUSER, INSDATE)
+		VALUES (
+			#{itemCd},
+			(SELECT USERINFODETAILCD FROM EXAM_MANAGER.USERINFODETAIL USERDETAIL WHERE #{userId} = USERDETAIL.ID AND #{userName} = USERDETAIL.INSUSER),
+			(SELECT 'OI' || NVL(LPAD(SUBSTR(MAX(OUTITEMLISTCD), 3)+1, 8, '0'), 1) FROM EXAM_MANAGER.OUTITEMLIST),
+			#{delivAmt}, '검수자', SYSDATE, #{checkYn}, #{delivYn}, #{delivcorpCd}, #{delivNo}, 'admin', SYSDATE
+		)
+	</insert>
+	
+	<!-- 출고관리 테이블에 수정하기 -->
+	<update id="outItemUpdate" parameterType="hashmap">
+		UPDATE EXAM_MANAGER.OUTITEMLIST
+		SET
+			DELIVNO = #{delivNo},
+			DELIVAMT = #{delivAmt},
+			CHECKYN = #{checkYn},
+			DELIVYN = #{delivYn},
+			DELIVCORPCD = #{delivcorpCd}
+		WHERE OUTITEMLISTCD = #{outItemListCode}
+	</update>
+	
+	<!-- 출고 시 물품관리 재고수량 변경 -->
+	<update id="stockUpdate" parameterType="hashmap">
+		UPDATE EXAM_MANAGER.ITEMLIST
+		SET 
+		<if test="upDown != null and upDown =='down'">
+			STOCKAMT = STOCKAMT - #{updateNum}
+		</if>
+		<if test="upDown != null and upDown =='up'">
+			STOCKAMT = STOCKAMT + #{updateNum}
+		</if>
+		
+		WHERE ITEMCD = #{itemCd}
+	</update>
+	
+	<!-- 전체리스트 상품수량 변경결과 -->
+	<select id="resultAmt" parameterType="String" resultType="hashmap">
+		SELECT ITEMCD, STOCKAMT FROM EXAM_MANAGER.ITEMLIST
+		WHERE ITEMCD = #{itemCode}
+	</select>
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
